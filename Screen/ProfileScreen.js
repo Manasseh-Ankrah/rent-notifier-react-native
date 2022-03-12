@@ -10,18 +10,42 @@ import {
   TextInput,
   Divider,
   Button,
-  Avatar
+  Avatar,
+  TouchableRipple
 } from "react-native-paper";
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text } from "react-native";
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text, TouchableOpacity } from "react-native";
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useStateValue } from '../State/StateProvider';
+import {windowHeight} from '../utils/Dimensions';
+
+import axios from '../axios';
+
 
 
 const ProfileScreen = ({route, navigation }) => {
-  const [nightMode, setNightmode] = useState(false);
+  const [{adminState, studentState, nightMode}, dispatch] = useStateValue();
+  // const [nightMode, setNightmode] = useState(false);
   const [showDropDown, setShowDropDown] = useState(false);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(adminState.username);
   const [password, setPassword] = useState("");
+  // const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
+
+
+
+  const onUpdate = (e) => {
+    e.preventDefault();
+
+    console.log(adminState.id);
+ 
+    if (!username || !password) {
+      alert('Please enter all fields');
+    } else {
+      axios.patch(`/admin/${adminState.id}`,{'username': username,'password': password});
+      setUsername('');
+      setPassword('');
+    }
+  }
 
     return (
       <Provider theme={nightMode ? DarkTheme : DefaultTheme}>
@@ -33,18 +57,18 @@ const ProfileScreen = ({route, navigation }) => {
         barStyle={"light-content"}
       />
       <Appbar.Header >
-        <Appbar.Content title="Elite Rentals App" />
-        <Appbar.Action
+        <Appbar.Content title="Elite Rent Notifier" />
+        {/* <Appbar.Action
           icon={nightMode ? "brightness-7" : "brightness-3"}
           onPress={() => setNightmode(!nightMode)}
-        />
+        /> */}
       </Appbar.Header>
-      <ScrollView>
+      {/* <ScrollView> */}
       <Surface style={styles.containerStyle} > 
-        <SafeAreaView style={styles.safeContainerStyle}>
+        <SafeAreaView>
 
         <View style={styles.headerContainer}>
-          <Avatar.Image style={styles.avatar} size={140} source={require('./../assets/images/newprofile.jpg')} />
+          <Avatar.Image style={styles.avatar} size={140} source={require('./../assets/images/bg1.jpg')} />
          <Text style={nightMode ? styles.text1 : styles.text2}>Edit Profile</Text>
         </View>
 
@@ -69,20 +93,24 @@ const ProfileScreen = ({route, navigation }) => {
           right={<TextInput.Icon name="eye" />}
          />
     </View>
-    <Button style={styles.btn} color="#385ed9" mode="contained" onPress={() => console.log('saved')}>
+    <Button style={styles.btn} color="#d8b62d" mode="contained" onPress={onUpdate}>
        <Text style={styles.btnText}>Edit</Text>
     </Button>
     {/* <Button style={styles.btn} color="#385ed9" mode="contained" onPress={() => navigation.navigate("register")}>
        <Text style={styles.btnText}>Add Account</Text>
     </Button> */}
         <View style={styles.link}>
-    <Text style={nightMode ? styles.linkText1 : styles.linkText2} onPress={() => navigation.navigate('register')}>Add new Account</Text>
+        <TouchableOpacity
+        onPress={() => navigation.navigate('register')}      >
+    <Text style={nightMode ? styles.linkText1 : styles.linkText2}>Add new Account</Text>
+      </TouchableOpacity>
+
     </View>
       </View>
         
       </SafeAreaView>
       </Surface>
-      </ScrollView>
+      {/* </ScrollView> */}
     </ThemeProvider>
   </Provider>
     );
@@ -96,7 +124,7 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
-    height: 600
+    height: windowHeight
   },
   provider: {
     flex: 1,
@@ -154,6 +182,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontSize: 16,
+    color: '#fff'
   },
   link: {
     justifyContent:'center',
@@ -162,7 +191,7 @@ const styles = StyleSheet.create({
     marginTop:25,
   },
   linkText1: {
-    fontSize: 15,
+    fontSize: 17,
     color:'#fff',
   },
   linkText2: {

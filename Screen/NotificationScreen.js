@@ -10,17 +10,21 @@ import {
   TextInput,
   Divider,
   Button,
-  Avatar
+  Avatar,
+  List
 } from "react-native-paper";
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text } from "react-native";
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { windowHeight } from '../utils/Dimensions';
+import { useStateValue } from '../State/StateProvider';
 
 
 const NotificationScreen = ({route, navigation }) => {
-  const [nightMode, setNightmode] = useState(false);
+  // const [nightMode, setNightmode] = useState(false);
   const [showDropDown, setShowDropDown] = useState(false);
+  const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
+
 
     return (
       <Provider theme={nightMode ? DarkTheme : DefaultTheme}>
@@ -32,23 +36,47 @@ const NotificationScreen = ({route, navigation }) => {
           barStyle={"light-content"}
         />
         <Appbar.Header >
-          <Appbar.Content title="Elite Rentals App" />
-          <Appbar.Action
+          <Appbar.Content title="Elite Rent Notifier" />
+          {/* <Appbar.Action
             icon={nightMode ? "brightness-7" : "brightness-3"}
             onPress={() => setNightmode(!nightMode)}
-          />
+          /> */}
         </Appbar.Header>
-        <ScrollView>
+        {/* <ScrollView> */}
         <Surface style={styles.containerStyle} > 
           <SafeAreaView style={styles.safeContainerStyle}>
             <View style={styles.notificationBody}>
-              <Text style={styles.notificationText}> 0 notifications</Text>
+              <Text style={nightMode ? styles.notificationText2 : styles.notificationText1}> 2 Notifications</Text>
             </View>
-      
 
+            <Divider style={{marginTop:10, marginHorizontal:20, marginVertical: 5}}/>
+
+            <View style={{marginTop:10}}>
+          <View>
+            <List.Item
+              title="Manasseh Ankrah || Loc: Kasoa"
+              description="Notification Date: 3/4/2022"
+              left={props => <List.Icon {...props} icon="folder" />}
+              // right={props => <List.Icon {...props} icon="folder" />}
+              right={props => <List.Icon {...props} color={'#e0b60e'} icon="delete" />}
+            />
+            {/* <Divider /> */}
+          </View>
+          <View>
+            <List.Item
+              title="John Doe || Loc: Spintex"
+              description="Notification Date: 3/4/2022"
+              left={props => <List.Icon {...props} icon="folder" />}
+              // right={props => <List.Icon {...props} icon="folder" />}
+              right={props => <List.Icon {...props} color={'#e0b60e'} icon="delete" />}
+            />
+          </View>
+
+
+        </View>
       </SafeAreaView>
       </Surface>
-      </ScrollView>
+      {/* </ScrollView> */}
     </ThemeProvider>
   </Provider>
     );
@@ -67,10 +95,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems:'center',
     textAlign:'center',
+    marginTop: 20,
+    marginBottom: 10
   },
-  notificationText: {
+  notificationText1: {
     fontSize: 18,
-    color:'#fff'
+    color:'black',
+    fontWeight:'bold'
+  },
+  notificationText2: {
+    fontSize: 18,
+    color:'#fff',
+    fontWeight:'bold'
   },
   // provider: {
   //   flex: 1,

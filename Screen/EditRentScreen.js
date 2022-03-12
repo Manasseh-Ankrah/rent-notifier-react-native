@@ -15,9 +15,8 @@ import {
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text } from "react-native";
 import DropDown from "react-native-paper-dropdown";
 import DatePicker from 'react-native-datepicker';
-import axios from "../axios";
 import { useStateValue } from '../State/StateProvider';
-
+import axios from '../axios';
 
 
 // import { StyleSheet, View, Text, Image,ScrollView } from 'react-native';
@@ -25,7 +24,7 @@ import { useStateValue } from '../State/StateProvider';
 // import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 
-const AddTenantScreen = ({route, navigation }) => {
+const EditRentScreen = ({route, navigation }) => {
   // New states
   // const [nightMode, setNightmode] = useState(false);
   const [showDropDown, setShowDropDown] = useState(false);
@@ -35,24 +34,24 @@ const AddTenantScreen = ({route, navigation }) => {
   let cMonth = currentDate.getMonth() + 1;
   let cYear = currentDate.getFullYear();
   
+  const [tenant, setTenant] = useState(route.params.tenant);
+  const [location, setLocation] = useState(route.params.location);
+  const [propType, setPropType] = useState(route.params.propType);
+  const [startDate, setStartDate] = useState(route.params.startDate);
+  const [dueDate, setDueDate] = useState(route.params.dueDate);
+  const [id, setId] = useState(route.params._id);
+  const [notificationDate, setNotificationDate] = useState(route.params.notificationDate);
   const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
-  const [tenant, setTenant] = useState("");
-  const [location, setLocation] = useState("");
-  const [propType, setPropType] = useState("");
-  // const [createdBy, setCreatedBy] = useState(adminState.id);
-  const [startDate, setStartDate] = useState(`${cDay}/${cMonth}/${cYear}`);
-  const [dueDate, setDueDate] = useState(`${cDay}/${cMonth}/${cYear}`);
-  const [notificationDate, setNotificationDate] = useState(`${cDay}/${cMonth}/${cYear}`);
 
-// console.log(adminState.id);
   const [visible, setVisible] = React.useState(false);
 
   const onToggleSnackBar = () => {
     setVisible(!visible);
     // navigation.navigate('Home');
   };
-
   const onDismissSnackBar = () => setVisible(false);
+
+
 
 
   const propertyType = [
@@ -65,63 +64,73 @@ const AddTenantScreen = ({route, navigation }) => {
       value: "chamber and hall",
     },
     {
-      label: "3 Bedroom Apartment ",
+      label: "3 Bedroom Apartment",
       value: "3 bedroom apartment",
     },
     {
-      label: "2 Bedroom Apartment ",
+      label: "2 Bedroom Apartment",
       value: "2 bedroom apartment",
     },
   ];
 
 
-  const onSubmit = async (e) => {
+  const onUpdate = (e) => {
     e.preventDefault();
-    if (!tenant || !location || !propType || !startDate || !dueDate || !notificationDate) {
-      alert("Fill all the form");
-    } 
-    else {
-      // const nDay = notificationDate.split("/")[0];
-      // const nMonth = notificationDate.split("/")[1];
-      // const nYear = notificationDate.split("/")[2];
 
-      const newTenant = {
-        "tenant": tenant,
-        "location": location,
-        "propType": propType,
-        "startDate": startDate,
-        "dueDate": dueDate,
-        "notificationDate": notificationDate,
-        "nDay": notificationDate.split("/")[0],
-        "nMonth": notificationDate.split("/")[1],
-        "nYear": notificationDate.split("/")[2],
-        // "createdBy": 12345,
-       }
-      // console.log({ tenant, location, propType, startDate,dueDate,notificationDate, nDay, nMonth, nYear, createdBy });
-        const addTenant = await axios.post('/tenant/add',newTenant )
-        .then((res)=> {
-          console.log(res.data);
-          const result = res.data;
-          dispatch({
-            type: "GET_TENANT_DATA",
-            item: {
-              tenantState: [...tenantState,res.data],
-            },
-          });
-          alert("Tenant added sucessfully!!");
-          setTenant("");
-          setLocation("");
-          setPropType("");
-          // setStartDate(`${cDay}/${cMonth}/${cYear}`);
-          // setDueDate(`${cDay}/${cMonth}/${cYear}`)/
-          // setNotificationDate(`${cDay}/${cMonth}/${cYear}`);
-        })
-        .catch((err)=> {
-          alert(err)
-        });
+    // const nDay = notificationDate.split("/")[0];
+    // const nMonth = notificationDate.split("/")[1];
+    // const nYear = notificationDate.split("/")[2];
+    
+    const editTenant = 
+    { 
+      tenant: tenant, 
+      location: location, 
+      propType: propType, 
+      startDate: startDate,
+      dueDate: dueDate,
+      notificationDate: notificationDate, 
+      nDay: notificationDate.split("/")[0], 
+      nMonth: notificationDate.split("/")[1], 
+      nYear: notificationDate.split("/")[2], 
+      // createdBy: createdBy  
     }
-  };
 
+    const edit = axios.patch(`tenant/${id}`,editTenant).then((res)=> {
+      console.log(res.data);
+    }).catch(()=> {
+      console.log("Update failed");
+    })
+
+    // Updating the frontend
+    let state = [...tenantState];
+    let requiredState = state.filter((tenant) => tenant._id === id);
+    console.log(requiredState);
+    requiredState[0].tenant = tenant;
+    requiredState[0].location = location;
+    requiredState[0].propType = propType;
+    requiredState[0].startDate = startDate;
+    requiredState[0].dueDate = dueDate;
+    requiredState[0].notificationDate = notificationDate;
+    requiredState[0].nDay = notificationDate.split("/")[0];
+    requiredState[0].nMonth = notificationDate.split("/")[1];
+    requiredState[0].nYear = notificationDate.split("/")[2];
+
+    //  requiredState = {...requiredState, fName: "Romeo"};
+
+    // console.log(requiredState);
+    // console.log(state);
+
+    
+    dispatch({
+      type: "GET_TENANT_DATA",
+      item: {
+        tenantState: state
+      },
+    });
+    
+    onToggleSnackBar()
+    navigation.navigate("Home");
+  };
 
     return (
       <Provider theme={nightMode ? DarkTheme : DefaultTheme}>
@@ -132,8 +141,13 @@ const AddTenantScreen = ({route, navigation }) => {
         }
         barStyle={"light-content"}
       />
-      <Appbar.Header>
-        <Appbar.Content title="Elite Rent Notifier" />
+       <Appbar.Header style={styles.headerSection}>
+        <Appbar.Action
+          style={styles.icon}
+          size={35}
+          icon={"chevron-left"}
+          onPress={() => navigation.navigate("Home")}
+        />
         {/* <Appbar.Action
           icon={nightMode ? "brightness-7" : "brightness-3"}
           onPress={() => setNightmode(!nightMode)}
@@ -144,7 +158,7 @@ const AddTenantScreen = ({route, navigation }) => {
         <SafeAreaView style={styles.safeContainerStyle}>
 
       <View style={styles.headerView}>
-        <Text style={nightMode? styles.headerText2 : styles.headerText1}>Add New Tenant</Text>
+        <Text style={nightMode? styles.headerText2 : styles.headerText1}>Edit Rent Details</Text>
       </View>
 
          <TextInput
@@ -326,8 +340,8 @@ const AddTenantScreen = ({route, navigation }) => {
         <View style={styles.spacerStyle} />
         <View style={styles.spacerStyle} />
 
-         <Button style={styles.btn} color="#d8b62d"  mode='contained' onPress={onSubmit}>
-           <Text style={styles.btnText}>Add Tenant</Text>
+         <Button style={styles.btn} color="#d8b62d"  mode='contained' onPress={onUpdate}>
+           <Text style={styles.btnText}>Update</Text>
          </Button>
 
          <Snackbar
@@ -339,8 +353,10 @@ const AddTenantScreen = ({route, navigation }) => {
           onPress: () => {
             // Do something
           },
-        }}>
-        Operation was Successful.
+        }}
+        style={{backgroundColor:'green'}}
+        >
+         Update Successful.
       </Snackbar>
         </SafeAreaView>
       </Surface>
@@ -351,7 +367,7 @@ const AddTenantScreen = ({route, navigation }) => {
     );
   }
 
-  export default AddTenantScreen;
+  export default EditRentScreen;
 
   const styles = StyleSheet.create({
     containerStyle: {
@@ -378,6 +394,9 @@ const AddTenantScreen = ({route, navigation }) => {
       flex: 1,
       margin: 20,
       justifyContent: "center",
+    },
+    headerSection: {
+      justifyContent:'space-between',
     },
     datepickerContainer: {
       flex: 1,

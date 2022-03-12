@@ -16,29 +16,49 @@ import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text } from "reac
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {windowHeight} from '../utils/Dimensions';
+import axios from '../axios';
+import { useStateValue } from '../State/StateProvider';
 
 
 const RegisterScreen = ({navigation}) => {
-  const [nightMode, setNightmode] = useState(false);
+  // const [nightMode, setNightmode] = useState(false);
   const [showDropDown, setShowDropDown] = useState(false);
+  const [{adminState, studentState, nightMode}, dispatch] = useStateValue();
+
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!email || !password || !confirmPassword || !username) {
+      alert("Fill all the form");
+    } else if (!email.includes("@")) {
+      alert("Enter a valid email address");
+    } else if (password !== confirmPassword) {
+      alert("Enter the same password twice for verification");
+    } else {
+        const registerResponse = await axios.post("/admin/register", 
+        { email, password, confirmPassword, username })
+        .then((res)=> {
+          console.log(res.data);
+          alert("Account created sucessfully!!");
+          setUsername("");
+          setEmail("");
+          setPassword("");
+          setConfirmPassword("");
+        })
+        .catch(()=> {
+          alert('An error occured')
+        });
+    }
+  };
 
-  const onSubmit = () => {
-    console.log(username);
-    console.log(email);
-    console.log(password);
-    console.log(confirmPassword);
 
-    setUsername("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-  }
+
 
   return(
     <Provider  theme={nightMode ? DarkTheme : DefaultTheme}>
@@ -57,20 +77,20 @@ const RegisterScreen = ({navigation}) => {
           icon={"chevron-left"}
           onPress={() => navigation.navigate("Profile")}
         />
-        <Appbar.Action
+        {/* <Appbar.Action
           icon={nightMode ? "brightness-7" : "brightness-3"}
           onPress={() => setNightmode(!nightMode)}
-        />
+        /> */}
       </Appbar.Header>
-      <ScrollView>
+      {/* <ScrollView> */}
       <Surface style={styles.containerStyle}>
-        <SafeAreaView style={styles.safeContainerStyle}>
-  <View style={styles.container1}>
+        <SafeAreaView>
+  <View>
       <View style={styles.headerContainer}>
          <Text style={nightMode ? styles.text1 : styles.text2}>Add New Account</Text>
       </View>
 
-<View style={styles.secondContainer}>
+<View >
       <View>
         <TextInput
           style={nightMode ? styles.textInput1 : styles.textInput2}
@@ -112,7 +132,7 @@ const RegisterScreen = ({navigation}) => {
     </View>
     <View>
 
-    <Button style={styles.btn} color="#ee4265" mode="contained" onPress={() => navigation.navigate('home')}>
+    <Button style={styles.btn} color="#d8b62d" mode="contained" onPress={submit}>
     <Text style={styles.btnText}>Add Account</Text>
   </Button>
     </View>
@@ -121,7 +141,7 @@ const RegisterScreen = ({navigation}) => {
 
 </SafeAreaView>
       </Surface>
-      </ScrollView>
+      {/* </ScrollView> */}
     </ThemeProvider>
   </Provider>
 )
@@ -133,26 +153,10 @@ export default RegisterScreen;
 const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
-    // height: windowHeight
-    // marginTop:60
+    height: windowHeight,
+    justifyContent: 'center',
+    // marginTop: 30
   },
-  // safeContainerStyle: {
-  //   flex: 1,
-  //   margin: 20,
-  //   justifyContent: "center",
-  // },
-  // secondContainer: {
-    // flex: 1,
-    // marginTop: 0,
-    // justifyContent: "center",
-    // },
-    container1: {
-      flex: 1,
-      marginTop: 20,
-  },
-  // fullwidth: {
-  //   flex: 1,
-  // },
   headerView: {
     justifyContent:'center',
     alignItems:'center',
@@ -161,13 +165,15 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems:'center',
+    marginTop: -70
+
+    //     marginTop: 20,
+    // marginBottom: 20,
   },
   headerSection: {
     justifyContent:'space-between',
   },
-  // icon: {
-  //   fontSize:3,
-  // },
+
   avatar: {
     backgroundColor:'white',
     marginBottom: 5,
@@ -203,13 +209,15 @@ textInput2: {
     height:50,
     marginTop:15,
     marginBottom:20,
-    marginHorizontal:40,
+    marginHorizontal:80,
     color:'red',
     borderTopLeftRadius:20,
     borderBottomRightRadius:20
   },
   btnText: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
  
   },
   link: {

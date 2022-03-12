@@ -21,7 +21,7 @@ function BottomTabs() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarColor: '#385ed9',
+          tabBarColor: '#1b4cec',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="home" color={color} size={26} />
           ),
@@ -32,7 +32,7 @@ function BottomTabs() {
         component={NotificationScreen}
         options={{
           tabBarLabel: '(0) Notifications',
-          tabBarColor: '#694fad',
+          tabBarColor: '#1b4cec',
           tabBarIcon: ({ color }) => (
             // <Badge style={{color:'#fff',backgroundColor:'grey'}} size={26}>3</Badge>
             <MaterialCommunityIcons name="bell" color={color} size={26} />
@@ -46,7 +46,7 @@ function BottomTabs() {
         component={AddTenantScreen}
         options={{
           tabBarLabel: 'Add Tenant',
-          tabBarColor: '#1f65ff',
+          tabBarColor: '#1b4cec',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="plus-circle" color={color} size={26} />
           ),
@@ -59,7 +59,7 @@ function BottomTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarColor: '#d02860',
+          tabBarColor: '#1b4cec',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="account" color={color} size={26} />
           ),
