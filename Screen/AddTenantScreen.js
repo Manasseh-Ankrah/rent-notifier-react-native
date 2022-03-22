@@ -1,5 +1,4 @@
-import React,{useState} from 'react';
-// import { Appbar, Avatar,TextInput,Button } from 'react-native-paper';
+import React,{useState, useEffect} from 'react';
 import {
   Appbar,
   DarkTheme,
@@ -12,7 +11,7 @@ import {
   Button,
   Snackbar 
 } from "react-native-paper";
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text } from "react-native";
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text, LogBox } from "react-native";
 import DropDown from "react-native-paper-dropdown";
 import DatePicker from 'react-native-datepicker';
 import axios from "../axios";
@@ -23,6 +22,10 @@ import { useStateValue } from '../State/StateProvider';
 // import { StyleSheet, View, Text, Image,ScrollView } from 'react-native';
 // import { NavigationContainer } from '@react-navigation/native';
 // import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+LogBox.ignoreLogs([
+  'Animated: `useNativeDriver` was not specified.',
+]);
 
 
 const AddTenantScreen = ({route, navigation }) => {
@@ -35,14 +38,23 @@ const AddTenantScreen = ({route, navigation }) => {
   let cMonth = currentDate.getMonth() + 1;
   let cYear = currentDate.getFullYear();
   
-  const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
+  const [{adminState,status, tenantState, nightMode,createdByState}, dispatch] = useStateValue();
   const [tenant, setTenant] = useState("");
   const [location, setLocation] = useState("");
-  const [propType, setPropType] = useState("");
+  const [propType, setPropType] = useState("-- Apartment Type --");
+  const [initialPayment, setInitialPayment] = useState("0");
+  const [monthlyCost, setMonthlyCost] = useState("0");
+  const [balance, setBalance] = useState("0");
   // const [createdBy, setCreatedBy] = useState(adminState.id);
   const [startDate, setStartDate] = useState(`${cDay}/${cMonth}/${cYear}`);
   const [dueDate, setDueDate] = useState(`${cDay}/${cMonth}/${cYear}`);
   const [notificationDate, setNotificationDate] = useState(`${cDay}/${cMonth}/${cYear}`);
+
+
+  useEffect(() => {
+    console.log('Created Id = ',createdByState);
+  }, [])
+  
 
 // console.log(adminState.id);
   const [visible, setVisible] = React.useState(false);
@@ -77,14 +89,10 @@ const AddTenantScreen = ({route, navigation }) => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!tenant || !location || !propType || !startDate || !dueDate || !notificationDate) {
+    if (!tenant || !location || !propType || !startDate || !dueDate || !notificationDate || !initialPayment || !monthlyCost || !balance ) {
       alert("Fill all the form");
     } 
     else {
-      // const nDay = notificationDate.split("/")[0];
-      // const nMonth = notificationDate.split("/")[1];
-      // const nYear = notificationDate.split("/")[2];
-
       const newTenant = {
         "tenant": tenant,
         "location": location,
@@ -95,7 +103,10 @@ const AddTenantScreen = ({route, navigation }) => {
         "nDay": notificationDate.split("/")[0],
         "nMonth": notificationDate.split("/")[1],
         "nYear": notificationDate.split("/")[2],
-        // "createdBy": 12345,
+        "initialPayment": initialPayment,
+        "monthlyCost": monthlyCost,
+        "balance": balance,
+        "createdBy": createdByState,
        }
       // console.log({ tenant, location, propType, startDate,dueDate,notificationDate, nDay, nMonth, nYear, createdBy });
         const addTenant = await axios.post('/tenant/add',newTenant )
@@ -111,7 +122,13 @@ const AddTenantScreen = ({route, navigation }) => {
           alert("Tenant added sucessfully!!");
           setTenant("");
           setLocation("");
-          setPropType("");
+          setPropType("-- Apartment Type --");
+          setInitialPayment("0");
+          setMonthlyCost("0");
+          setBalance("0");
+          navigation.navigate("Add Tenant");
+          // navigation.navigate("Home");
+
           // setStartDate(`${cDay}/${cMonth}/${cYear}`);
           // setDueDate(`${cDay}/${cMonth}/${cYear}`)/
           // setNotificationDate(`${cDay}/${cMonth}/${cYear}`);
@@ -165,7 +182,7 @@ const AddTenantScreen = ({route, navigation }) => {
             <View style={styles.spacerStyle} />
           <DropDown
             style={styles.textInput}
-            label={"Apartmant Details"}
+            label={propType}
             mode={"outlined"}
             visible={showDropDown}
             showDropDown={() => setShowDropDown(true)}
@@ -191,6 +208,30 @@ const AddTenantScreen = ({route, navigation }) => {
           {/* Datepicker */}
 
           {/* End Date */}
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Initial Payment"
+            value={initialPayment}
+            onChangeText={(val) => setInitialPayment(val)}
+         />
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Monthly Cost"
+            value={monthlyCost}
+            onChangeText={(val) => setMonthlyCost(val)}
+         />
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Balance"
+            value={balance}
+            onChangeText={(val) => setBalance(val)}
+         />
           <View style={styles.spacerStyle} />
           <View style={styles.spacerStyle} />
 
@@ -226,6 +267,7 @@ const AddTenantScreen = ({route, navigation }) => {
             dateText: {
               fontSize: 17,
             }
+            
           }}
           onDateChange={(startDate) => {
             setStartDate(startDate);
@@ -281,7 +323,7 @@ const AddTenantScreen = ({route, navigation }) => {
 
        {/* Notification Trigger Section */}
           <View style={styles.trigger}>
-          <Text style={nightMode? styles.triggerText2 : styles.triggerText1}>When do you want to trigger Notification?</Text>
+          <Text style={nightMode? styles.triggerText2 : styles.triggerText1}>Set Notification Trigger Date:</Text>
           </View>
         <View>
           <View>

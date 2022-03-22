@@ -41,6 +41,9 @@ const EditRentScreen = ({route, navigation }) => {
   const [dueDate, setDueDate] = useState(route.params.dueDate);
   const [id, setId] = useState(route.params._id);
   const [notificationDate, setNotificationDate] = useState(route.params.notificationDate);
+  const [initialPayment, setInitialPayment] = useState(`${route.params.initialPayment}`);
+  const [monthlyCost, setMonthlyCost] = useState(`${route.params.monthlyCost}`);
+  const [balance, setBalance] = useState(`${route.params.balance}`);
   const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
 
   const [visible, setVisible] = React.useState(false);
@@ -91,7 +94,10 @@ const EditRentScreen = ({route, navigation }) => {
       notificationDate: notificationDate, 
       nDay: notificationDate.split("/")[0], 
       nMonth: notificationDate.split("/")[1], 
-      nYear: notificationDate.split("/")[2], 
+      nYear: notificationDate.split("/")[2],
+      initialPayment: initialPayment,
+      monthlyCost: monthlyCost,
+      balance: balance, 
       // createdBy: createdBy  
     }
 
@@ -114,6 +120,9 @@ const EditRentScreen = ({route, navigation }) => {
     requiredState[0].nDay = notificationDate.split("/")[0];
     requiredState[0].nMonth = notificationDate.split("/")[1];
     requiredState[0].nYear = notificationDate.split("/")[2];
+    requiredState[0].initialPayment = initialPayment;
+    requiredState[0].monthlyCost = monthlyCost;
+    requiredState[0].balance = balance;
 
     //  requiredState = {...requiredState, fName: "Romeo"};
 
@@ -205,6 +214,31 @@ const EditRentScreen = ({route, navigation }) => {
           {/* Datepicker */}
 
           {/* End Date */}
+
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Initial Payment"
+            value={initialPayment}
+            onChangeText={(val) => setInitialPayment(val)}
+         />
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Monthly Cost"
+            value={monthlyCost}
+            onChangeText={(val) => setMonthlyCost(val)}
+         />
+
+          <TextInput
+            style={nightMode? styles.textInput2 : styles.textInput1}
+            mode="outlined"
+            label="Balance"
+            value={balance}
+            onChangeText={(val) => setBalance(val)}
+         />
           <View style={styles.spacerStyle} />
           <View style={styles.spacerStyle} />
 
@@ -295,7 +329,7 @@ const EditRentScreen = ({route, navigation }) => {
 
        {/* Notification Trigger Section */}
           <View style={styles.trigger}>
-          <Text style={nightMode? styles.triggerText2 : styles.triggerText1}>When do you want to trigger Notification?</Text>
+          <Text style={nightMode? styles.triggerText2 : styles.triggerText1}>Set Notification Trigger Date: </Text>
           </View>
         <View>
           <View>

@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react';
+import React,{useState,useEffect,useRef} from 'react';
 // import { Appbar, Avatar,TextInput,Button } from 'react-native-paper';
 import {
   Appbar,
@@ -13,9 +13,10 @@ import {
   Avatar,
   List,
   IconButton,
-  Snackbar
+  Snackbar,
+  ActivityIndicator
 } from "react-native-paper";
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text} from "react-native";
+import { SafeAreaView, ScrollView, StatusBar, StyleSheet, View,Text,Platform} from "react-native";
 import { NavigationContainer } from '@react-navigation/native';
 import { useIsFocused } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -23,6 +24,20 @@ import Feather from 'react-native-vector-icons/Feather';
 import {windowHeight} from '../utils/Dimensions';
 import { useStateValue } from '../State/StateProvider';
 import axios from "../axios";
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+
+// import * as Device from 'expo-device';
+// import * as Notifications from 'expo-notifications';
+// import * as Permissions from 'expo-permissions';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 
 const HomeScreen = ({route, navigation }) => {
@@ -30,33 +45,165 @@ const HomeScreen = ({route, navigation }) => {
   const [showDropDown, setShowDropDown] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [{adminState,status, tenantState, nightMode}, dispatch] = useStateValue();
-  const isFocused = useIsFocused();
+  const [{adminState,status, tenantState, nightMode, notificationState, previousState,createdByState}, dispatch] = useStateValue();
+  const [expoPushToken, setExpoPushToken] = useState('');
+  const [notification, setNotification] = useState(false);
+  const notificationListener = useRef();
+  const responseListener = useRef();
+  let currentDate = new Date();
 
 
 
-  // fetch('http://10.105.2.111:5000/tenant')
-  // .then(response => response.json())
-  // .then(result => console.log(result));
-  
-
+  // Fetch Tenants from the databasse
   const getAllTenants = async () => {
-    const fetchTenants = await axios.get("/tenant").then((res)=> {
+    // {"6228c4c53e1a11f6ba4f50b4"}
+    const fetchTenants = await axios.get(`/tenant/${createdByState}`).then((res)=> {
       // console.log("LoginScreen",res.data);
+      // console.log("LoginScreen",res.data);
+
+      if (res.data === []) {
+      // console.log("res.data returned ==",res.data);
+
       dispatch({
         type: "GET_TENANT_DATA",
         item: {
-          tenantState: res.data,
+            tenantState: false,
         },
       });
+        
+      } else {
+        dispatch({
+          type: "GET_TENANT_DATA",
+          item: {
+            tenantState: res.data,
+          },
+        });
+      }
     }).catch((err)=> {
       console.log(err)
     });
   };
+
+
+
+
+  const onSubmit = async (newTenant) => {
+        const addToPrevious = await axios.post('/previous/register',newTenant )
+        .then((res)=> {
+          console.log(res.data);
+          const result = res.data;
+        })
+        .catch((err)=> {
+          alert(err)
+        });
+  };
   
   useEffect(() => {
     getAllTenants();
-    // console.log(adminState.id);
+
+    // console.log('Tenant state ==',tenantState);
+
+    // Notification Logic
+    async function getPermission() {
+      let token;
+      if (Constants.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          alert('Failed to get push token for push notification!');
+          // await Storage.setItem('expo-push-token','')
+          return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+        // await Storage.setItem('expo-push-token',token)
+        console.log(token);
+      } else {
+        alert('Must use physical device for Push Notifications');
+      }
+    
+      if (Platform.OS === 'android') {
+        Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
+    
+      return token;
+    }
+    getPermission().then(token => setExpoPushToken(token));
+    console.log(expoPushToken);
+
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      setNotification(notification);
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      // console.log(response);
+    });
+
+
+    // Notification Trigger Logic 
+    if(!tenantState) {
+      return ;
+
+    } else {
+    const newTenantState = [...tenantState];
+
+    const filterTenant = newTenantState.filter((ten) => {
+      if (currentDate.getDate() !== ten.nDay || currentDate.getMonth() + 1 !== ten.nMonth || currentDate.getFullYear() !== ten.nYear ) {
+        return ;
+      } else {
+        return ten;
+      }
+    })
+
+
+    dispatch({
+      type: "GET_NOTIFICATION_DATA",
+      item: {
+        notificationState: filterTenant,
+      },
+    });
+
+          //  Trigger Notification 
+          const MappedTenant = filterTenant.map(notifyTenant => {
+            if (notifyTenant.tenant) {
+              async function schedulePushNotification() {
+                await Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: "You've got a new rent alert! 📬",
+                    body: "Tenant: " + notifyTenant.tenant + "," + " DueDate: " + notifyTenant.dueDate + "," + " Location: " + notifyTenant.location + "",
+                    data: { data: 'goes here' },
+                  },
+                  trigger: { seconds: 1 },
+                });
+              }
+              schedulePushNotification();
+    
+              onSubmit(notifyTenant)
+    
+              return notifyTenant;
+              
+            } else {
+              return ;
+            }
+          })
+
+  }
+
+
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+
   }, []);
 
 
@@ -73,7 +220,7 @@ const HomeScreen = ({route, navigation }) => {
           dispatch({
             type: "GET_TENANT_DATA",
             item: {
-              tenantState: tenantState.filter((tenant) => tenant._id !== id),
+              tenantState: tenantState?.filter((tenant) => tenant._id !== id),
             },
           });
         };
@@ -82,16 +229,12 @@ const HomeScreen = ({route, navigation }) => {
       const DeleteItem = (id) => {
         console.log(id);
        const delFunction = axios.delete(`/tenant/${id}`).then((res)=> {
-         console.log(res.data);
+        onDeleteTenant(id);
+        toggleIsDeleteSnackBar();
+
         }).catch(()=> {
          alert("Delete Unsuccessful");
        })
-        // axios({
-        //   method: "delete",
-        //   url: `/tenant/${id}`,
-        // });
-        onDeleteTenant(id);
-        toggleIsDeleteSnackBar();
       };
 
     
@@ -106,11 +249,11 @@ const HomeScreen = ({route, navigation }) => {
           nightMode: !nightMode,
         },
       });
-
     }
-    
 
+    // console.log("tenantState-----",tenantState);
 
+   
     return (
       <Provider theme={nightMode ? DarkTheme : DefaultTheme}>
     <ThemeProvider theme={nightMode ? DarkTheme : DefaultTheme}>
@@ -121,14 +264,18 @@ const HomeScreen = ({route, navigation }) => {
         barStyle={"light-content"}
       />
       <Appbar.Header >
+        <Appbar.Action
+          icon={"brightness-3"}
+          onPress={() => navigation.navigate("login")}
+        />
         <Appbar.Content title="Elite Rent Notifier" />
         <Appbar.Action
           icon={nightMode ? "brightness-7" : "brightness-3"}
           onPress={changeDarkmode}
         />
       </Appbar.Header>
-      <ScrollView>
       <Surface style={styles.containerStyle} > 
+      <ScrollView>
         <SafeAreaView style={styles.safeContainerStyle}>
         <View style={styles.topRow}>
           <Text  style={nightMode ? styles.rowText1 : styles.rowText2}>Welcome {adminState.username} ! </Text>
@@ -158,17 +305,19 @@ color="#385ed9"/>
         </View>
         </View>
 
+        {/* Scrollview */}
+
         <View style={styles.btnDetails}>
           <View style={styles.btnDetailsText}>
           <Text style={nightMode ? styles.textDetails1 : styles.textDetails2}>Rent Alerts</Text>
           </View>
 
         <View style={styles.btnDetailsBtn}>
-          <Button style={styles.btnUpcoming} color="#385ed9" mode="contained" onPress={() => console.log('saved')}>
+          <Button style={styles.btnUpcoming} color="#385ed9" mode="contained" onPress={() => navigation.navigate('Home')}>
             <Text style={styles.btnText}> Upcoming </Text>
           </Button>
 
-          <Button style={styles.btnOld} color="#385ed9" mode="contained" onPress={() => console.log('saved')}>
+          <Button style={styles.btnOld} color="#385ed9" mode="contained" onPress={() => navigation.navigate('previous')}>
             <Text style={styles.btnText}>Previous </Text>
           </Button>
        </View>
@@ -176,39 +325,45 @@ color="#385ed9"/>
 
         <Divider style={{marginTop:20, marginHorizontal:10}}/>
 
+       <View style={{marginTop:10}}>
+{/* <ActivityIndicator style={{marginTop:50}} animating={true} color="green" size={40} /> */}
 
-        <View style={{marginTop:10}}>
-          {tenantState.map((ten) =>(
-            <View key={ten._id}>
-            <List.Item
-              title={`${ten.tenant} -- ${ten.location}`}
-              description= {`Due Date: ${ten.dueDate} -- Notify: ${ten.notificationDate}`}
-              // left={props => <List.Icon {...props} icon="folder" />}
-              right={props => (
-                <View style={{ flexDirection:'row',justifyContent:'space-between'}}>
-                    <IconButton
-                      icon="pen"
-                      color={nightMode? 'grey' : '#e0b60e'}
-                      size={26}
-                      onPress={()=> UpdateItem(ten)}
-                    />
-                    <IconButton
-                      icon="delete"
-                      color={nightMode? 'grey' : '#e0b60e'}
-                      size={26}
-                      onPress={() => DeleteItem(ten._id)}
-                    />
-                </View>      
-              )
-            }
-            />
-            <Divider style={{marginHorizontal:10}}/>
-            </View>
-          )
-          )}
+         {tenantState
+         ? 
+         tenantState.map((ten) =>(
+          <View key={ten._id}>
+          <List.Item
+            title={`${ten.tenant} -- ${ten.location}`}
+            description= {`Due Date: ${ten.dueDate} -- Notify: ${ten.notificationDate}`}
+            right={props => (
+              <View style={{ flexDirection:'row',justifyContent:'space-between'}}>
+                  <IconButton
+                    icon="pen"
+                    color={nightMode? 'grey' : '#e0b60e'}
+                    size={26}
+                    onPress={()=> UpdateItem(ten)}
+                  />
+                  <IconButton
+                    icon="delete"
+                    color={nightMode? 'grey' : '#e0b60e'}
+                    size={26}
+                    onPress={() => DeleteItem(ten._id)}
+                  />
+              </View>      
+            )
+          }
+          />
+          <Divider style={{marginHorizontal:10}}/>
+          </View>
+        )
+        )
+         : 
+         <Text>No Tenant Data</Text>
+         }
 
 
-            {/* Error Snack */}
+
+
     {isDeleted ? <Snackbar
         visible={isDeleted}
         duration={1000}
@@ -216,7 +371,6 @@ color="#385ed9"/>
         action={{
           label: 'Ok',
           onPress: () => {
-            // Do something
           },
         }}
         style={{backgroundColor:'green'}}
@@ -224,14 +378,15 @@ color="#385ed9"/>
         Deleted Successfully!!
       </Snackbar> : <Text></Text>
     }
+   
           
 
 
-        </View>
+        </View> 
 
       </SafeAreaView>
-      </Surface>
       </ScrollView>
+      </Surface>
     </ThemeProvider>
   </Provider>
     );
@@ -315,16 +470,9 @@ const styles = StyleSheet.create({
     justifyContent:'center',
     alignItems:'center',
     textAlign:'center',
-    // height:50,
     marginTop:4,
-    marginHorizontal:140,
-    // borderTopLeftRadius:20,
-    // borderBottomRightRadius:20
+    marginHorizontal:70,
   },
-  // buttonContainer: {
-  //   marginTop: 5,
-  //   marginHorizontal: 80
-  //   },
   btnDetails: {
     flexDirection: 'column',
     alignItems:'center',

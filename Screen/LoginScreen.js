@@ -11,7 +11,7 @@ import { useStateValue } from "../State/StateProvider";
 const LoginScreen = ({route,navigation}) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [{adminState, tenantState}, dispatch] = useStateValue();
+  const [{adminState, tenantState, createdByState}, dispatch] = useStateValue();
   const [isLoading, setIsLoading] = useState(false);
 
     // useEffect(() => {
@@ -61,12 +61,17 @@ const LoginScreen = ({route,navigation}) => {
             console.log(res.data);
             // getAllTenants();
             setIsLoading(true);
+            dispatch({
+              type: "GET_CREATEDBY_DATA",
+              item: {
+                createdByState: res.data.admin.id,
+              },
+            });
 
             if (res.data.status === "SUCCESSFUL") {
               navigation.navigate('tabs');
-              // useEffect(() => {
-              // }, []);
               console.log("Login Successful");
+              // console.log('Created Id = ',createdByState);
             } else {
               console.log("Login Failed");
             }
@@ -79,12 +84,6 @@ const LoginScreen = ({route,navigation}) => {
                 status: res.data.status,
               },
             });
-            // dispatch({
-            //   type: "GET_CREATEDBY_DATA",
-            //   item: {
-            //     adminToken: res.data.admin.id,
-            //   },
-            // });
 
           }).catch(() => {
             toggleErrorSnackBar();
@@ -129,7 +128,7 @@ const LoginScreen = ({route,navigation}) => {
     </View>
     <View>
     <Button style={styles.btn} color="#d8b62d" mode="contained" onPress={submit}>
-      {isLoading? <Text style={{color:'#fff',fontSize:17}}>Loading...</Text> :<Text style={{color:'#fff',fontSize:17}}>Login</Text>}
+      {<Text style={{color:'#fff',fontSize:17}}>Login</Text>}
       {/* <ActivityIndicator animating={true} color="red" size={20} /> */}
     </Button>
   

@@ -5,11 +5,14 @@ import NotificationScreen from '../Screen/NotificationScreen';
 import AddTenantScreen from '../Screen/AddTenantScreen';
 import ProfileScreen from '../Screen/ProfileScreen';
 import { Badge } from 'react-native-paper';
+import { useStateValue } from '../State/StateProvider';
 
 
 const Tab = createMaterialBottomTabNavigator();
 
 function BottomTabs() {
+  const [{adminState,status, tenantState, nightMode, notificationState}, dispatch] = useStateValue();
+
   return (
     <Tab.Navigator
       initialRouteName="Feed"
@@ -31,7 +34,7 @@ function BottomTabs() {
         name="Notifications"
         component={NotificationScreen}
         options={{
-          tabBarLabel: '(0) Notifications',
+          tabBarLabel: `${notificationState.length} Notification(s)`,
           tabBarColor: '#1b4cec',
           tabBarIcon: ({ color }) => (
             // <Badge style={{color:'#fff',backgroundColor:'grey'}} size={26}>3</Badge>

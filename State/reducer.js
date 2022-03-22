@@ -4,6 +4,8 @@ export const initialState = {
   status: "",
   createdByState: "",
   tenantState: [],
+  notificationState: [],
+  previousState: [],
   nightMode: false,
 };
 
@@ -20,6 +22,16 @@ const reducer = (state, action) => {
       return {
         ...state,
         tenantState: action.item.tenantState,
+      };
+    case "GET_NOTIFICATION_DATA":
+      return {
+        ...state,
+        notificationState: action.item.notificationState,
+      };
+    case "GET_PREVIOUS_DATA":
+      return {
+        ...state,
+        previousState: action.item.previousState,
       };
     case "GET_CREATEDBY_DATA":
       return {

@@ -82,7 +82,7 @@ const RegisterScreen = ({navigation}) => {
           onPress={() => setNightmode(!nightMode)}
         /> */}
       </Appbar.Header>
-      {/* <ScrollView> */}
+      <ScrollView>
       <Surface style={styles.containerStyle}>
         <SafeAreaView>
   <View>
@@ -138,10 +138,11 @@ const RegisterScreen = ({navigation}) => {
     </View>
     </View>
 </View>
-
+ 
+ 
 </SafeAreaView>
       </Surface>
-      {/* </ScrollView> */}
+      </ScrollView> 
     </ThemeProvider>
   </Provider>
 )
