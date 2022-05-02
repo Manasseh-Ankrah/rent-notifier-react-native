@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import axios from '../axios';
 import BottomTabs from './../Components/BottomTabs';
 import { useStateValue } from "../State/StateProvider";
-
+import AsyncStorage from '@react-native-community/async-storage';
 
 const LoginScreen = ({route,navigation}) => {
   const [username, setUsername] = useState("");
@@ -69,10 +69,11 @@ const LoginScreen = ({route,navigation}) => {
             });
 
             if (res.data.status === "SUCCESSFUL") {
+               AsyncStorage.setItem('isLoggedIn', "1");
               navigation.navigate('tabs');
               console.log("Login Successful");
               // console.log('Created Id = ',createdByState);
-            } else {
+            } else { 
               console.log("Login Failed");
             }
 
@@ -90,6 +91,9 @@ const LoginScreen = ({route,navigation}) => {
           })
         }          
   };
+
+
+
 
 
 
@@ -114,6 +118,7 @@ const LoginScreen = ({route,navigation}) => {
           value={username}
           onChangeText={(val) => setUsername(val)}
           right={<TextInput.Icon name="account" />}
+          autoCapitalize="none"
           />
     </View>
       <View>
@@ -124,6 +129,7 @@ const LoginScreen = ({route,navigation}) => {
           onChangeText={(val) => setPassword(val)}
           secureTextEntry
           right={<TextInput.Icon name="eye" />}
+          autoCapitalize="none"
         />
     </View>
     <View>

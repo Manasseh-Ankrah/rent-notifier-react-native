@@ -194,11 +194,7 @@ const HomeScreen = ({route, navigation }) => {
               return ;
             }
           })
-
   }
-
-
-
     return () => {
       Notifications.removeNotificationSubscription(notificationListener.current);
       Notifications.removeNotificationSubscription(responseListener.current);
@@ -250,6 +246,17 @@ const HomeScreen = ({route, navigation }) => {
         },
       });
     }
+
+    // const logOut = () => {
+    //   dispatch({
+    //     type: "GET_DARKMODE",
+    //     item: {
+    //       nightMode: !nightMode,
+    //     },
+    //   });
+    // }
+
+
 
     // console.log("tenantState-----",tenantState);
 
